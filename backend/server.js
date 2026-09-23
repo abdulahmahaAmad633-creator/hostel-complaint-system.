@@ -46,7 +46,7 @@ const upload = multer({
   },
 });
 
-// LOGIN
+
 app.post("/api/login", async (req, res) => {
   const { role, rollNo, roomNo, username, password } = req.body;
 
@@ -82,19 +82,19 @@ app.post("/api/login", async (req, res) => {
   res.json({ token, user: safeUser });
 });
 
-// LOGOUT
+
 app.post("/api/logout", requireAuth, (req, res) => {
   const token = req.headers.authorization?.slice(7);
   if (token) destroySession(token);
   res.json({ ok: true });
 });
 
-// ME
+
 app.get("/api/me", requireAuth, (req, res) => {
   res.json({ user: req.user });
 });
 
-// COMPLAINTS
+
 app.get("/api/complaints", requireAuth, async (req, res) => {
   const db = await readDB();
   let list = db.complaints;
@@ -190,7 +190,7 @@ app.patch(
   },
 );
 
-// STAFF / ADMIN
+
 app.get("/api/staff", requireAuth, requireRole("admin"), async (req, res) => {
   const db = await readDB();
   const staff = db.staff.map(({ password, ...s }) => s);
@@ -244,7 +244,6 @@ app.delete(
   },
 );
 
-// ANALYTICS
 app.get(
   "/api/analytics",
   requireAuth,
@@ -270,7 +269,7 @@ app.get(
   },
 );
 
-// ERROR HANDLER
+
 app.use((err, req, res, next) => {
   console.error(err);
 
