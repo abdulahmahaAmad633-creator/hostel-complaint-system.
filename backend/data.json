@@ -1,0 +1,26 @@
+{
+  "complaints": [],
+  "staff": [
+    {
+      "id": "s1",
+      "name": "Ravi",
+      "role": "staff",
+      "username": "ravi",
+      "password": "staff123"
+    },
+    {
+      "id": "s2",
+      "name": "Priya",
+      "role": "staff",
+      "username": "priya",
+      "password": "staff123"
+    },
+    {
+      "id": "a1",
+      "name": "Admin",
+      "role": "admin",
+      "username": "admin",
+      "password": "admin123"
+    }
+  ]
+}
