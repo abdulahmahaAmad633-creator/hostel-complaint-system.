@@ -1,5 +1,17 @@
 {
-  "complaints": [],
+  "complaints": [
+    {
+      "id": "2c303dcf-6e0e-48a0-8719-63b7e09b803d",
+      "created_at": "2026-09-24T14:37:10.027Z",
+      "roll_no": "1234567",
+      "room_no": "21",
+      "category": "Plumbing",
+      "description": "i need to fix issue",
+      "status": "pending",
+      "assigned_to": null,
+      "photo_url": "/uploads/1790260630008-Screenshot_2026-09-02_011416.png"
+    }
+  ],
   "staff": [
     {
       "id": "s1",

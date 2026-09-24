@@ -4,17 +4,21 @@ import { useUser } from '../context/UserContext.jsx'
 
 export default function RoleHeader({ roleLabel }) {
   const navigate = useNavigate()
-  const { resetUser } = useUser()
+  const { resetUser, user } = useUser()
 
-  function switchRole() {
-    resetUser()
-    navigate('/')
+  async function signOut() {
+    await resetUser()
+    navigate('/', { replace: true })
   }
 
   return (
-    <div className="role-header">
-      <span className="role-badge">{roleLabel} view</span>
-      <button className="link-btn" onClick={switchRole}>Switch role</button>
-    </div>
+    <header className="role-header">
+      <div className="brand"><span className="brand-mark">H</span><span>HavenDesk</span></div>
+      <div className="header-actions">
+        <span className="role-badge">{roleLabel}</span>
+        <span className="user-name">{user?.name || user?.rollNo}</span>
+        <button className="link-btn" onClick={signOut}>Sign out</button>
+      </div>
+    </header>
   )
 }

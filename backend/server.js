@@ -51,26 +51,34 @@ app.post("/api/login", async (req, res) => {
   const { role, rollNo, roomNo, username, password } = req.body;
 
   if (role === "student") {
-    if (!rollNo || !roomNo) {
+    const normalizedRollNo = String(rollNo || "").trim();
+    const normalizedRoomNo = String(roomNo || "").trim();
+    if (!normalizedRollNo || !normalizedRoomNo) {
       return res.status(400).json({ error: "rollNo and roomNo required" });
     }
 
     const user = {
-      id: `student-${rollNo}`,
-      name: `Student ${rollNo}`,
+      id: `student-${normalizedRollNo}`,
+      name: `Student ${normalizedRollNo}`,
       role: "student",
-      rollNo,
-      roomNo,
+      rollNo: normalizedRollNo,
+      roomNo: normalizedRoomNo,
     };
 
     const token = createSession(user);
     return res.json({ token, user });
   }
 
+  if (!["staff", "admin"].includes(role)) {
+    return res.status(400).json({ error: "Valid role required" });
+  }
+
   const db = await readDB();
   const user = db.staff.find(
     (u) =>
-      u.username === username && u.password === password && u.role === role,
+      u.username === String(username || "").trim() &&
+      u.password === password &&
+      u.role === role,
   );
 
   if (!user) {
@@ -178,7 +186,13 @@ app.patch(
       }
     }
 
-    if (status) complaint.status = status;
+    const validStatuses = ["pending", "assigned", "in progress", "resolved", "rejected"];
+    if (status !== undefined) {
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({ error: "Invalid complaint status" });
+      }
+      complaint.status = status;
+    }
 
     if (assigned_to !== undefined) {
       complaint.assigned_to =

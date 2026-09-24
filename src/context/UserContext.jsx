@@ -1,26 +1,42 @@
-import React, { createContext, useContext, useState } from 'react'
+import React, { createContext, useContext, useEffect, useState } from 'react'
+import { api } from '../lib/api.js'
 
-// Holds "who the app thinks the current user is" since there's no login.
-// role: 'student' | 'staff' | 'admin' | null
-// student: { rollNo, roomNo } — only filled in when role === 'student'
 const UserContext = createContext(null)
 
 export function UserProvider({ children }) {
-  const [role, setRole] = useState(null)
-  const [student, setStudent] = useState({ rollNo: '', roomNo: '' })
+  const [user, setUser] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('hostel_user')) || null } catch { return null }
+  })
+  const [loading, setLoading] = useState(Boolean(localStorage.getItem('hostel_token')))
 
-  function resetUser() {
-    setRole(null)
-    setStudent({ rollNo: '', roomNo: '' })
+  useEffect(() => {
+    if (!localStorage.getItem('hostel_token')) { setLoading(false); return }
+    api.me().then(({ user: currentUser }) => setUser(currentUser)).catch(() => {
+      localStorage.removeItem('hostel_token')
+      localStorage.removeItem('hostel_user')
+      setUser(null)
+    }).finally(() => setLoading(false))
+  }, [])
+
+  function setSession(token, currentUser) {
+    localStorage.setItem('hostel_token', token)
+    localStorage.setItem('hostel_user', JSON.stringify(currentUser))
+    setUser(currentUser)
   }
 
-  const value = { role, setRole, student, setStudent, resetUser }
+  async function resetUser() {
+    try { await api.logout() } catch {}
+    localStorage.removeItem('hostel_token')
+    localStorage.removeItem('hostel_user')
+    setUser(null)
+  }
+
+  const value = { user, role: user?.role || null, loading, setSession, resetUser }
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>
 }
 
-// Custom hook so pages just call useUser() instead of importing useContext everywhere
 export function useUser() {
   const ctx = useContext(UserContext)
-  if (!ctx) throw new Error('useUser must be used inside a <UserProvider>')
+  if (!ctx) throw new Error('useUser must be used inside UserProvider')
   return ctx
 }

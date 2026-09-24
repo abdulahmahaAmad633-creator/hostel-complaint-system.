@@ -1,58 +1,29 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useUser } from '../context/UserContext.jsx'
+import { api } from '../lib/api.js'
 
 export default function StudentIdentify() {
   const navigate = useNavigate()
-  const { setStudent } = useUser()
-  const [rollNo, setRollNo] = useState('')
-  const [roomNo, setRoomNo] = useState('')
+  const { setSession } = useUser()
+  const [form, setForm] = useState({ rollNo: '', roomNo: '' })
   const [error, setError] = useState('')
-
-  function handleSubmit(e) {
-    e.preventDefault()
-    if (!rollNo.trim() || !roomNo.trim()) {
-      setError('Please enter both your roll number and room number.')
-      return
-    }
-    setStudent({ rollNo: rollNo.trim(), roomNo: roomNo.trim() })
-    // Every complaint this student submits later gets tagged with these two values,
-    // so "my complaints" can be filtered without needing a real login.
-    navigate('/student')
+  async function submit(event) {
+    event.preventDefault()
+    if (!form.rollNo.trim() || !form.roomNo.trim()) return setError('Enter both your roll number and room number.')
+    try {
+      const result = await api.login({ ...form, role: 'student' })
+      setSession(result.token, result.user)
+      navigate('/student')
+    } catch (err) { setError(err.message) }
   }
-
-  return (
-    <div className="page centered">
-      <h1>Student Details</h1>
-      <p className="subtitle">We use this to show you your own complaints — no password needed.</p>
-
-      <form className="form-card" onSubmit={handleSubmit}>
-        <label>
-          Roll Number
-          <input
-            type="text"
-            value={rollNo}
-            onChange={(e) => setRollNo(e.target.value)}
-            placeholder="e.g. CS21B045"
-          maxLength={8}
-          />
-        </label>
-
-        <label>
-          Room Number
-          <input
-            type="text"
-            value={roomNo}
-            onChange={(e) => setRoomNo(e.target.value)}
-            placeholder="e.g. B-204"
-          
-          />
-        </label>
-
-        {error && <p className="error-text">{error}</p>}
-
-        <button type="submit" className="primary-btn">Continue</button>
-      </form>
-    </div>
-  )
+  return <main className="auth-page"><div className="auth-card">
+    <div className="brand"><span className="brand-mark">H</span><span>HavenDesk</span></div>
+    <p className="eyebrow">STUDENT ACCESS</p><h1>Let’s get you to your room.</h1><p className="subtitle">Use your campus details to see requests linked to you.</p>
+    <form className="signin-form" onSubmit={submit}>
+      <label>Roll number<input value={form.rollNo} onChange={(e) => setForm({ ...form, rollNo: e.target.value })} placeholder="e.g. CS21B045" maxLength={20} required /></label>
+      <label>Room number<input value={form.roomNo} onChange={(e) => setForm({ ...form, roomNo: e.target.value })} placeholder="e.g. B-204" maxLength={20} required /></label>
+      {error && <p className="error-text">{error}</p>}<button className="primary-btn">Open my dashboard <span>→</span></button>
+    </form><button className="back-btn" onClick={() => navigate('/')}>← Choose another role</button>
+  </div></main>
 }
