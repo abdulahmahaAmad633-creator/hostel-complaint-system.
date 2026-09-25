@@ -1,52 +1,15 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import RoleHeader from '../components/RoleHeader.jsx'
-import sampleComplaints from '../data/sampleComplaints.js'
+import { api } from '../lib/api.js'
 
 export default function AdminHome() {
-  const [complaints] = useState(sampleComplaints)
-
-  // "Open" = not yet confirmed/rejected — still moving through the pipeline
-  const openStatuses = ['REPORTED', 'VERIFIED', 'ASSIGNED', 'IN PROGRESS']
-  const openIssues = complaints.filter((c) => openStatuses.includes(c.status)).length
-
-  // For a real system, "overdue" would compare against the SLA deadline.
-  // With fake data we don't have timestamps yet, so this stays at 0 for now
-  // — Member 2's backend will supply real dates to calculate this properly.
-  const overdueIssues = 0
-
-  const resolvedToday = complaints.filter((c) => c.status === 'RESOLVED' || c.status === 'CONFIRMED').length
-
-  // Same placeholder note as overdue — real average needs timestamps from the backend.
-  const avgResolutionTime = '—'
-
-  return (
-    <div className="page">
-      <RoleHeader roleLabel="Admin" />
-      <h2>Admin Dashboard</h2>
-      <p className="subtitle">Maintenance performance overview</p>
-
-      <div className="stats-grid">
-        <div className="stat-card">
-          <span className="stat-number">{openIssues}</span>
-          <span className="stat-label">Open Issues</span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-number">{overdueIssues}</span>
-          <span className="stat-label">Overdue Issues</span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-number">{avgResolutionTime}</span>
-          <span className="stat-label">Avg Resolution Time</span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-number">{resolvedToday}</span>
-          <span className="stat-label">Resolved Today</span>
-        </div>
-      </div>
-
-      <div className="placeholder-card" style={{ marginTop: 20 }}>
-        <p>Note: Overdue Issues and Avg Resolution Time will show real values once Member 2's backend provides timestamps for each complaint.</p>
-      </div>
-    </div>
-  )
+  const [analytics, setAnalytics] = useState(null); const [staff, setStaff] = useState([]); const [form, setForm] = useState({ name: '', username: '', password: '' }); const [message, setMessage] = useState('')
+  function load() { Promise.all([api.analytics(), api.staff()]).then(([stats, team]) => { setAnalytics(stats); setStaff(team) }).catch((err) => setMessage(err.message)) }
+  useEffect(load, [])
+  async function add(event) { event.preventDefault(); try { await api.addStaff(form); setForm({ name: '', username: '', password: '' }); setMessage('Team member added.'); load() } catch (err) { setMessage(err.message) } }
+  async function remove(id) { if (!window.confirm('Remove this team member?')) return; try { await api.removeStaff(id); load() } catch (err) { setMessage(err.message) } }
+  const total = analytics?.total || 0; const open = total - (analytics?.byStatus?.resolved || 0) - (analytics?.byStatus?.rejected || 0)
+  return <div className="dashboard"><RoleHeader roleLabel="Administrator" /><main className="content"><div className="welcome-row"><div><p className="eyebrow">OPERATIONS OVERVIEW</p><h1>See the whole picture.</h1><p className="subtitle">A pulse check on residence support and your team.</p></div><div className="round-avatar admin-avatar">◈</div></div><div className="admin-stats"><div><span>Total requests</span><strong>{total}</strong><small>All time</small></div><div><span>Open right now</span><strong>{open}</strong><small>Need attention</small></div><div><span>Resolved</span><strong>{analytics?.byStatus?.resolved || 0}</strong><small>Successfully closed</small></div><div><span>Top category</span><strong className="category-stat">{Object.entries(analytics?.byCategory || {}).sort((a, b) => b[1] - a[1])[0]?.[0] || '—'}</strong><small>Most reported</small></div></div>
+    <div className="admin-grid"><section className="surface"><div className="toolbar"><div><h2>Team access</h2><p className="subtitle">{staff.length} people with access</p></div></div><div className="team-list">{staff.map((person) => <div className="team-row" key={person.id}><span className="round-avatar">{person.name.slice(0, 1)}</span><div><strong>{person.name}</strong><small>{person.username} · {person.role}</small></div>{person.role !== 'admin' && <button className="icon-btn" onClick={() => remove(person.id)}>×</button>}</div>)}</div></section><section className="surface"><div className="section-title"><span className="section-icon">＋</span><div><h2>Add a teammate</h2><p>Give a new staff member access.</p></div></div><form className="compact-form" onSubmit={add}><input placeholder="Full name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /><input placeholder="Username" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} required /><input type="password" placeholder="Temporary password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required /><button className="primary-btn">Add to team</button>{message && <p className="success-text">{message}</p>}</form></section></div>
+  </main></div>
 }

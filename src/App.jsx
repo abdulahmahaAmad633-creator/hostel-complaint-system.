@@ -12,7 +12,7 @@ import AdminHome from './pages/AdminHome.jsx'
 export default function App() {
   return (
     <UserProvider>
-      <Routes>
+      <div className="app-shell"><Routes>
         <Route path="/" element={<RoleSelect />} />
         <Route path="/student/identify" element={<StudentIdentify />} />
 
@@ -40,7 +40,7 @@ export default function App() {
             </RequireRole>
           }
         />
-      </Routes>
+      </Routes></div>
     </UserProvider>
   )
 }
