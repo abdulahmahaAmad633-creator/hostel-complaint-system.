@@ -6,7 +6,7 @@ import fs from "fs";
 import crypto from "crypto";
 import { fileURLToPath } from "url";
 
-import { readDB, writeDB, seedIfNeeded } from "./db.js";
+import { readDB, writeDB, seedIfNeeded, registerUser } from "./db.js";
 import {
   createSession,
   destroySession,
@@ -45,7 +45,6 @@ const upload = multer({
     else cb(new Error("Only image files are allowed"));
   },
 });
-
 
 app.post("/api/login", async (req, res) => {
   const { role, rollNo, roomNo, username, password } = req.body;
@@ -90,6 +89,21 @@ app.post("/api/login", async (req, res) => {
   res.json({ token, user: safeUser });
 });
 
+app.post("/api/register", async (req, res) => {
+  const { name, username, password, role } = req.body || {};
+
+  try {
+    const user = await registerUser({ name, username, password, role });
+    const { password: _pw, ...safeUser } = user;
+    return res
+      .status(201)
+      .json({ message: "Account created successfully", user: safeUser });
+  } catch (error) {
+    return res
+      .status(400)
+      .json({ error: error.message || "Unable to create account" });
+  }
+});
 
 app.post("/api/logout", requireAuth, (req, res) => {
   const token = req.headers.authorization?.slice(7);
@@ -97,11 +111,9 @@ app.post("/api/logout", requireAuth, (req, res) => {
   res.json({ ok: true });
 });
 
-
 app.get("/api/me", requireAuth, (req, res) => {
   res.json({ user: req.user });
 });
-
 
 app.get("/api/complaints", requireAuth, async (req, res) => {
   const db = await readDB();
@@ -186,7 +198,13 @@ app.patch(
       }
     }
 
-    const validStatuses = ["pending", "assigned", "in progress", "resolved", "rejected"];
+    const validStatuses = [
+      "pending",
+      "assigned",
+      "in progress",
+      "resolved",
+      "rejected",
+    ];
     if (status !== undefined) {
       if (!validStatuses.includes(status)) {
         return res.status(400).json({ error: "Invalid complaint status" });
@@ -204,7 +222,6 @@ app.patch(
   },
 );
 
-
 app.get("/api/staff", requireAuth, requireRole("admin"), async (req, res) => {
   const db = await readDB();
   const staff = db.staff.map(({ password, ...s }) => s);
@@ -214,29 +231,18 @@ app.get("/api/staff", requireAuth, requireRole("admin"), async (req, res) => {
 app.post("/api/staff", requireAuth, requireRole("admin"), async (req, res) => {
   const { name, username, password, role = "staff" } = req.body;
 
-  if (!name || !username || !password) {
-    return res.status(400).json({ error: "name, username, password required" });
+  try {
+    const newStaff = await registerUser({ name, username, password, role });
+    const { password: _pw, ...safe } = newStaff;
+    return res.status(201).json(safe);
+  } catch (error) {
+    if (error.message === "Username already exists") {
+      return res.status(409).json({ error: error.message });
+    }
+    return res
+      .status(400)
+      .json({ error: error.message || "Unable to create staff account" });
   }
-
-  const db = await readDB();
-
-  if (db.staff.some((s) => s.username === username)) {
-    return res.status(409).json({ error: "Username already exists" });
-  }
-
-  const newStaff = {
-    id: crypto.randomUUID(),
-    name,
-    username,
-    password,
-    role,
-  };
-
-  db.staff.push(newStaff);
-  await writeDB(db);
-
-  const { password: _pw, ...safe } = newStaff;
-  res.status(201).json(safe);
 });
 
 app.delete(
@@ -282,7 +288,6 @@ app.get(
     });
   },
 );
-
 
 app.use((err, req, res, next) => {
   console.error(err);

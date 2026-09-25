@@ -10,29 +10,33 @@
       "status": "pending",
       "assigned_to": null,
       "photo_url": "/uploads/1790260630008-Screenshot_2026-09-02_011416.png"
+    },
+    {
+      "id": "ab9ebbe4-48ed-4f69-8c86-88ca369a626b",
+      "created_at": "2026-09-25T04:33:04.535Z",
+      "roll_no": "123456789",
+      "room_no": "23",
+      "category": "Plumbing",
+      "description": "fix it not working proberly",
+      "status": "pending",
+      "assigned_to": null,
+      "photo_url": "/uploads/1790310784517-Screenshot_2026-09-02_220605.png"
     }
   ],
   "staff": [
-    {
-      "id": "s1",
-      "name": "Ravi",
-      "role": "staff",
-      "username": "ravi",
-      "password": "staff123"
-    },
-    {
-      "id": "s2",
-      "name": "Priya",
-      "role": "staff",
-      "username": "priya",
-      "password": "staff123"
-    },
     {
       "id": "a1",
       "name": "Admin",
       "role": "admin",
       "username": "admin",
       "password": "admin123"
+    },
+    {
+      "id": "ded5349a-8206-43f8-b0da-2ec07f9c3076",
+      "name": "az",
+      "username": "as",
+      "password": "123456",
+      "role": "admin"
     }
   ]
 }
